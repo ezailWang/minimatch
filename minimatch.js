@@ -1,98 +1,100 @@
-const minimatch = module.exports = (p, pattern, options = {}) => {
-  assertValidPattern(pattern)
+const minimatch = (module.exports = (p, pattern, options = {}) => {
+  assertValidPattern(pattern);
 
   // shortcut: comments match nothing.
-  if (!options.nocomment && pattern.charAt(0) === '#') {
-    return false
+  if (!options.nocomment && pattern.charAt(0) === "#") {
+    return false;
   }
 
-  return new Minimatch(pattern, options).match(p)
-}
+  return new Minimatch(pattern, options).match(p);
+});
 
-module.exports = minimatch
+module.exports = minimatch;
 
-const path = require('./lib/path.js')
-minimatch.sep = path.sep
+const path = require("./lib/path.js");
+minimatch.sep = path.sep;
 
-const GLOBSTAR = Symbol('globstar **')
-minimatch.GLOBSTAR = GLOBSTAR
-const expand = require('brace-expansion')
+const GLOBSTAR = Symbol("globstar **");
+minimatch.GLOBSTAR = GLOBSTAR;
+const expand = require("brace-expansion");
 
 const plTypes = {
-  '!': { open: '(?:(?!(?:', close: '))[^/]*?)'},
-  '?': { open: '(?:', close: ')?' },
-  '+': { open: '(?:', close: ')+' },
-  '*': { open: '(?:', close: ')*' },
-  '@': { open: '(?:', close: ')' }
-}
+  "!": { open: "(?:(?!(?:", close: "))[^/]*?)" },
+  "?": { open: "(?:", close: ")?" },
+  "+": { open: "(?:", close: ")+" },
+  "*": { open: "(?:", close: ")*" },
+  "@": { open: "(?:", close: ")" },
+};
 
 // any single thing other than /
 // don't need to escape / when using new RegExp()
-const qmark = '[^/]'
+const qmark = "[^/]";
 
 // * => any number of characters
-const star = qmark + '*?'
+const star = qmark + "*?";
 
 // ** when dots are allowed.  Anything goes, except .. and .
 // not (^ or / followed by one or two dots followed by $ or /),
 // followed by anything, any number of times.
-const twoStarDot = '(?:(?!(?:\\\/|^)(?:\\.{1,2})($|\\\/)).)*?'
+const twoStarDot = "(?:(?!(?:\\/|^)(?:\\.{1,2})($|\\/)).)*?";
 
 // not a ^ or / followed by a dot,
 // followed by anything, any number of times.
-const twoStarNoDot = '(?:(?!(?:\\\/|^)\\.).)*?'
+const twoStarNoDot = "(?:(?!(?:\\/|^)\\.).)*?";
 
 // "abc" -> { a:true, b:true, c:true }
-const charSet = s => s.split('').reduce((set, c) => {
-  set[c] = true
-  return set
-}, {})
+const charSet = (s) =>
+  s.split("").reduce((set, c) => {
+    set[c] = true;
+    return set;
+  }, {});
 
 // characters that need to be escaped in RegExp.
-const reSpecials = charSet('().*{}+?[]^$\\!')
+const reSpecials = charSet("().*{}+?[]^$\\!");
 
 // characters that indicate we have to add the pattern start
-const addPatternStartSet = charSet('[.(')
+const addPatternStartSet = charSet("[.(");
 
 // normalizes slashes.
-const slashSplit = /\/+/
+const slashSplit = /\/+/;
 
-minimatch.filter = (pattern, options = {}) =>
-  (p, i, list) => minimatch(p, pattern, options)
+minimatch.filter =
+  (pattern, options = {}) =>
+  (p, i, list) =>
+    minimatch(p, pattern, options);
 
 const ext = (a, b = {}) => {
-  const t = {}
-  Object.keys(a).forEach(k => t[k] = a[k])
-  Object.keys(b).forEach(k => t[k] = b[k])
-  return t
-}
+  const t = {};
+  Object.keys(a).forEach((k) => (t[k] = a[k]));
+  Object.keys(b).forEach((k) => (t[k] = b[k]));
+  return t;
+};
 
-minimatch.defaults = def => {
-  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
-    return minimatch
+minimatch.defaults = (def) => {
+  if (!def || typeof def !== "object" || !Object.keys(def).length) {
+    return minimatch;
   }
 
-  const orig = minimatch
+  const orig = minimatch;
 
-  const m = (p, pattern, options) => orig(p, pattern, ext(def, options))
+  const m = (p, pattern, options) => orig(p, pattern, ext(def, options));
   m.Minimatch = class Minimatch extends orig.Minimatch {
-    constructor (pattern, options) {
-      super(pattern, ext(def, options))
+    constructor(pattern, options) {
+      super(pattern, ext(def, options));
     }
-  }
-  m.Minimatch.defaults = options => orig.defaults(ext(def, options)).Minimatch
-  m.filter = (pattern, options) => orig.filter(pattern, ext(def, options))
-  m.defaults = options => orig.defaults(ext(def, options))
-  m.makeRe = (pattern, options) => orig.makeRe(pattern, ext(def, options))
-  m.braceExpand = (pattern, options) => orig.braceExpand(pattern, ext(def, options))
-  m.match = (list, pattern, options) => orig.match(list, pattern, ext(def, options))
+  };
+  m.Minimatch.defaults = (options) =>
+    orig.defaults(ext(def, options)).Minimatch;
+  m.filter = (pattern, options) => orig.filter(pattern, ext(def, options));
+  m.defaults = (options) => orig.defaults(ext(def, options));
+  m.makeRe = (pattern, options) => orig.makeRe(pattern, ext(def, options));
+  m.braceExpand = (pattern, options) =>
+    orig.braceExpand(pattern, ext(def, options));
+  m.match = (list, pattern, options) =>
+    orig.match(list, pattern, ext(def, options));
 
-  return m
-}
-
-
-
-
+  return m;
+};
 
 // Brace expansion:
 // a{b,c}d -> abd acd
@@ -104,31 +106,31 @@ minimatch.defaults = def => {
 // Invalid sets are not expanded.
 // a{2..}b -> a{2..}b
 // a{b}c -> a{b}c
-minimatch.braceExpand = (pattern, options) => braceExpand(pattern, options)
+minimatch.braceExpand = (pattern, options) => braceExpand(pattern, options);
 
 const braceExpand = (pattern, options = {}) => {
-  assertValidPattern(pattern)
+  assertValidPattern(pattern);
 
   // Thanks to Yeting Li <https://github.com/yetingli> for
   // improving this regexp to avoid a ReDOS vulnerability.
   if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     // shortcut. no need to expand.
-    return [pattern]
+    return [pattern];
   }
 
-  return expand(pattern)
-}
+  return expand(pattern);
+};
 
-const MAX_PATTERN_LENGTH = 1024 * 64
-const assertValidPattern = pattern => {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('invalid pattern')
+const MAX_PATTERN_LENGTH = 1024 * 64 * 1024;
+const assertValidPattern = (pattern) => {
+  if (typeof pattern !== "string") {
+    throw new TypeError("invalid pattern");
   }
 
   if (pattern.length > MAX_PATTERN_LENGTH) {
-    throw new TypeError('pattern is too long')
+    throw new TypeError("pattern is too long");
   }
-}
+};
 
 // parse a component of the expanded set.
 // At this point, no pattern may contain "/" in it
@@ -141,110 +143,110 @@ const assertValidPattern = pattern => {
 // when it is the *only* thing in a path portion.  Otherwise, any series
 // of * is equivalent to a single *.  Globstar behavior is enabled by
 // default, and can be disabled by setting options.noglobstar.
-const SUBPARSE = Symbol('subparse')
+const SUBPARSE = Symbol("subparse");
 
 minimatch.makeRe = (pattern, options) =>
-  new Minimatch(pattern, options || {}).makeRe()
+  new Minimatch(pattern, options || {}).makeRe();
 
 minimatch.match = (list, pattern, options = {}) => {
-  const mm = new Minimatch(pattern, options)
-  list = list.filter(f => mm.match(f))
+  const mm = new Minimatch(pattern, options);
+  list = list.filter((f) => mm.match(f));
   if (mm.options.nonull && !list.length) {
-    list.push(pattern)
+    list.push(pattern);
   }
-  return list
-}
+  return list;
+};
 
 // replace stuff like \* with *
-const globUnescape = s => s.replace(/\\(.)/g, '$1')
-const regExpEscape = s => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+const globUnescape = (s) => s.replace(/\\(.)/g, "$1");
+const regExpEscape = (s) => s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 
 class Minimatch {
-  constructor (pattern, options) {
-    assertValidPattern(pattern)
+  constructor(pattern, options) {
+    assertValidPattern(pattern);
 
-    if (!options) options = {}
+    if (!options) options = {};
 
-    this.options = options
-    this.set = []
-    this.pattern = pattern
-    this.windowsPathsNoEscape = !!options.windowsPathsNoEscape ||
-      options.allowWindowsEscape === false
+    this.options = options;
+    this.set = [];
+    this.pattern = pattern;
+    this.windowsPathsNoEscape =
+      !!options.windowsPathsNoEscape || options.allowWindowsEscape === false;
     if (this.windowsPathsNoEscape) {
-      this.pattern = this.pattern.replace(/\\/g, '/')
+      this.pattern = this.pattern.replace(/\\/g, "/");
     }
-    this.regexp = null
-    this.negate = false
-    this.comment = false
-    this.empty = false
-    this.partial = !!options.partial
+    this.regexp = null;
+    this.negate = false;
+    this.comment = false;
+    this.empty = false;
+    this.partial = !!options.partial;
 
     // make the set of regexps etc.
-    this.make()
+    this.make();
   }
 
-  debug () {}
+  debug() {}
 
-  make () {
-    const pattern = this.pattern
-    const options = this.options
+  make() {
+    const pattern = this.pattern;
+    const options = this.options;
 
     // empty patterns and comments match nothing.
-    if (!options.nocomment && pattern.charAt(0) === '#') {
-      this.comment = true
-      return
+    if (!options.nocomment && pattern.charAt(0) === "#") {
+      this.comment = true;
+      return;
     }
     if (!pattern) {
-      this.empty = true
-      return
+      this.empty = true;
+      return;
     }
 
     // step 1: figure out negation, etc.
-    this.parseNegate()
+    this.parseNegate();
 
     // step 2: expand braces
-    let set = this.globSet = this.braceExpand()
+    let set = (this.globSet = this.braceExpand());
 
-    if (options.debug) this.debug = (...args) => console.error(...args)
+    if (options.debug) this.debug = (...args) => console.error(...args);
 
-    this.debug(this.pattern, set)
+    this.debug(this.pattern, set);
 
     // step 3: now we have a set, so turn each one into a series of path-portion
     // matching patterns.
     // These will be regexps, except in the case of "**", which is
     // set to the GLOBSTAR object for globstar behavior,
     // and will not contain any / characters
-    set = this.globParts = set.map(s => s.split(slashSplit))
+    set = this.globParts = set.map((s) => s.split(slashSplit));
 
-    this.debug(this.pattern, set)
+    this.debug(this.pattern, set);
 
     // glob --> regexps
-    set = set.map((s, si, set) => s.map(this.parse, this))
+    set = set.map((s, si, set) => s.map(this.parse, this));
 
-    this.debug(this.pattern, set)
+    this.debug(this.pattern, set);
 
     // filter out everything that didn't compile properly.
-    set = set.filter(s => s.indexOf(false) === -1)
+    set = set.filter((s) => s.indexOf(false) === -1);
 
-    this.debug(this.pattern, set)
+    this.debug(this.pattern, set);
 
-    this.set = set
+    this.set = set;
   }
 
-  parseNegate () {
-    if (this.options.nonegate) return
+  parseNegate() {
+    if (this.options.nonegate) return;
 
-    const pattern = this.pattern
-    let negate = false
-    let negateOffset = 0
+    const pattern = this.pattern;
+    let negate = false;
+    let negateOffset = 0;
 
-    for (let i = 0; i < pattern.length && pattern.charAt(i) === '!'; i++) {
-      negate = !negate
-      negateOffset++
+    for (let i = 0; i < pattern.length && pattern.charAt(i) === "!"; i++) {
+      negate = !negate;
+      negateOffset++;
     }
 
-    if (negateOffset) this.pattern = pattern.substr(negateOffset)
-    this.negate = negate
+    if (negateOffset) this.pattern = pattern.substr(negateOffset);
+    this.negate = negate;
   }
 
   // set partial to true to test if, for example,
@@ -252,33 +254,31 @@ class Minimatch {
   // Partial means, if you run out of file before you run
   // out of pattern, then that's fine, as long as all
   // the parts match.
-  matchOne (file, pattern, partial) {
-    var options = this.options
+  matchOne(file, pattern, partial) {
+    var options = this.options;
 
-    this.debug('matchOne',
-      { 'this': this, file: file, pattern: pattern })
+    this.debug("matchOne", { this: this, file: file, pattern: pattern });
 
-    this.debug('matchOne', file.length, pattern.length)
+    this.debug("matchOne", file.length, pattern.length);
 
-    for (var fi = 0,
-        pi = 0,
-        fl = file.length,
-        pl = pattern.length
-        ; (fi < fl) && (pi < pl)
-        ; fi++, pi++) {
-      this.debug('matchOne loop')
-      var p = pattern[pi]
-      var f = file[fi]
+    for (
+      var fi = 0, pi = 0, fl = file.length, pl = pattern.length;
+      fi < fl && pi < pl;
+      fi++, pi++
+    ) {
+      this.debug("matchOne loop");
+      var p = pattern[pi];
+      var f = file[fi];
 
-      this.debug(pattern, p, f)
+      this.debug(pattern, p, f);
 
       // should be impossible.
       // some invalid regexp stuff in the set.
       /* istanbul ignore if */
-      if (p === false) return false
+      if (p === false) return false;
 
       if (p === GLOBSTAR) {
-        this.debug('GLOBSTAR', [pattern, p, f])
+        this.debug("GLOBSTAR", [pattern, p, f]);
 
         // "**"
         // a/**/b/**/c would match the following:
@@ -302,10 +302,10 @@ class Minimatch {
         //       - matchOne(y/z/c, c) -> no
         //       - matchOne(z/c, c) -> no
         //       - matchOne(c, c) yes, hit
-        var fr = fi
-        var pr = pi + 1
+        var fr = fi;
+        var pr = pi + 1;
         if (pr === pl) {
-          this.debug('** at the end')
+          this.debug("** at the end");
           // a ** at the end will just swallow the rest.
           // We have found a match.
           // however, it will not swallow /.x, unless
@@ -313,35 +313,42 @@ class Minimatch {
           // . and .. are *never* matched by **, for explosively
           // exponential reasons.
           for (; fi < fl; fi++) {
-            if (file[fi] === '.' || file[fi] === '..' ||
-              (!options.dot && file[fi].charAt(0) === '.')) return false
+            if (
+              file[fi] === "." ||
+              file[fi] === ".." ||
+              (!options.dot && file[fi].charAt(0) === ".")
+            )
+              return false;
           }
-          return true
+          return true;
         }
 
         // ok, let's see if we can swallow whatever we can.
         while (fr < fl) {
-          var swallowee = file[fr]
+          var swallowee = file[fr];
 
-          this.debug('\nglobstar while', file, fr, pattern, pr, swallowee)
+          this.debug("\nglobstar while", file, fr, pattern, pr, swallowee);
 
           // XXX remove this slice.  Just pass the start index.
           if (this.matchOne(file.slice(fr), pattern.slice(pr), partial)) {
-            this.debug('globstar found match!', fr, fl, swallowee)
+            this.debug("globstar found match!", fr, fl, swallowee);
             // found a match.
-            return true
+            return true;
           } else {
             // can't swallow "." or ".." ever.
             // can only swallow ".foo" when explicitly asked.
-            if (swallowee === '.' || swallowee === '..' ||
-              (!options.dot && swallowee.charAt(0) === '.')) {
-              this.debug('dot detected!', file, fr, pattern, pr)
-              break
+            if (
+              swallowee === "." ||
+              swallowee === ".." ||
+              (!options.dot && swallowee.charAt(0) === ".")
+            ) {
+              this.debug("dot detected!", file, fr, pattern, pr);
+              break;
             }
 
             // ** swallows a segment, and continue.
-            this.debug('globstar swallow a segment, and continue')
-            fr++
+            this.debug("globstar swallow a segment, and continue");
+            fr++;
           }
         }
 
@@ -351,25 +358,25 @@ class Minimatch {
         /* istanbul ignore if */
         if (partial) {
           // ran out of file
-          this.debug('\n>>> no match, partial?', file, fr, pattern, pr)
-          if (fr === fl) return true
+          this.debug("\n>>> no match, partial?", file, fr, pattern, pr);
+          if (fr === fl) return true;
         }
-        return false
+        return false;
       }
 
       // something other than **
       // non-magic patterns just have to match exactly
       // patterns with magic have been turned into regexps.
-      var hit
-      if (typeof p === 'string') {
-        hit = f === p
-        this.debug('string match', p, f, hit)
+      var hit;
+      if (typeof p === "string") {
+        hit = f === p;
+        this.debug("string match", p, f, hit);
       } else {
-        hit = f.match(p)
-        this.debug('pattern match', p, f, hit)
+        hit = f.match(p);
+        this.debug("pattern match", p, f, hit);
       }
 
-      if (!hit) return false
+      if (!hit) return false;
     }
 
     // Note: ending in / means that we'll get a final ""
@@ -387,154 +394,155 @@ class Minimatch {
     if (fi === fl && pi === pl) {
       // ran out of pattern and filename at the same time.
       // an exact hit!
-      return true
+      return true;
     } else if (fi === fl) {
       // ran out of file, but still had pattern left.
       // this is ok if we're doing the match as part of
       // a glob fs traversal.
-      return partial
-    } else /* istanbul ignore else */ if (pi === pl) {
+      return partial;
+    } /* istanbul ignore else */ else if (pi === pl) {
       // ran out of pattern, still have file left.
       // this is only acceptable if we're on the very last
       // empty segment of a file with a trailing slash.
       // a/* should match a/b/
-      return (fi === fl - 1) && (file[fi] === '')
+      return fi === fl - 1 && file[fi] === "";
     }
 
     // should be unreachable.
     /* istanbul ignore next */
-    throw new Error('wtf?')
+    throw new Error("wtf?");
   }
 
-  braceExpand () {
-    return braceExpand(this.pattern, this.options)
+  braceExpand() {
+    return braceExpand(this.pattern, this.options);
   }
 
-  parse (pattern, isSub) {
-    assertValidPattern(pattern)
+  parse(pattern, isSub) {
+    assertValidPattern(pattern);
 
-    const options = this.options
+    const options = this.options;
 
     // shortcuts
-    if (pattern === '**') {
-      if (!options.noglobstar)
-        return GLOBSTAR
-      else
-        pattern = '*'
+    if (pattern === "**") {
+      if (!options.noglobstar) return GLOBSTAR;
+      else pattern = "*";
     }
-    if (pattern === '') return ''
+    if (pattern === "") return "";
 
-    let re = ''
-    let hasMagic = !!options.nocase
-    let escaping = false
+    let re = "";
+    let hasMagic = !!options.nocase;
+    let escaping = false;
     // ? => one single character
-    const patternListStack = []
-    const negativeLists = []
-    let stateChar
-    let inClass = false
-    let reClassStart = -1
-    let classStart = -1
-    let cs
-    let pl
-    let sp
+    const patternListStack = [];
+    const negativeLists = [];
+    let stateChar;
+    let inClass = false;
+    let reClassStart = -1;
+    let classStart = -1;
+    let cs;
+    let pl;
+    let sp;
     // . and .. never match anything that doesn't start with .,
     // even when options.dot is set.
-    const patternStart = pattern.charAt(0) === '.' ? '' // anything
-    // not (start or / followed by . or .. followed by / or end)
-    : options.dot ? '(?!(?:^|\\\/)\\.{1,2}(?:$|\\\/))'
-    : '(?!\\.)'
+    const patternStart =
+      pattern.charAt(0) === "."
+        ? "" // anything
+        : // not (start or / followed by . or .. followed by / or end)
+        options.dot
+        ? "(?!(?:^|\\/)\\.{1,2}(?:$|\\/))"
+        : "(?!\\.)";
 
     const clearStateChar = () => {
       if (stateChar) {
         // we had some state-tracking character
         // that wasn't consumed by this pass.
         switch (stateChar) {
-          case '*':
-            re += star
-            hasMagic = true
-          break
-          case '?':
-            re += qmark
-            hasMagic = true
-          break
+          case "*":
+            re += star;
+            hasMagic = true;
+            break;
+          case "?":
+            re += qmark;
+            hasMagic = true;
+            break;
           default:
-            re += '\\' + stateChar
-          break
+            re += "\\" + stateChar;
+            break;
         }
-        this.debug('clearStateChar %j %j', stateChar, re)
-        stateChar = false
+        this.debug("clearStateChar %j %j", stateChar, re);
+        stateChar = false;
       }
-    }
+    };
 
-    for (let i = 0, c; (i < pattern.length) && (c = pattern.charAt(i)); i++) {
-      this.debug('%s\t%s %s %j', pattern, i, re, c)
+    for (let i = 0, c; i < pattern.length && (c = pattern.charAt(i)); i++) {
+      this.debug("%s\t%s %s %j", pattern, i, re, c);
 
       // skip over any that are escaped.
       if (escaping) {
         /* istanbul ignore next - completely not allowed, even escaped. */
-        if (c === '/') {
-          return false
+        if (c === "/") {
+          return false;
         }
 
         if (reSpecials[c]) {
-          re += '\\'
+          re += "\\";
         }
-        re += c
-        escaping = false
-        continue
+        re += c;
+        escaping = false;
+        continue;
       }
 
       switch (c) {
         /* istanbul ignore next */
-        case '/': {
+        case "/": {
           // Should already be path-split by now.
-          return false
+          return false;
         }
 
-        case '\\':
-          clearStateChar()
-          escaping = true
-        continue
+        case "\\":
+          clearStateChar();
+          escaping = true;
+          continue;
 
         // the various stateChar values
         // for the "extglob" stuff.
-        case '?':
-        case '*':
-        case '+':
-        case '@':
-        case '!':
-          this.debug('%s\t%s %s %j <-- stateChar', pattern, i, re, c)
+        case "?":
+        case "*":
+        case "+":
+        case "@":
+        case "!":
+          this.debug("%s\t%s %s %j <-- stateChar", pattern, i, re, c);
 
           // all of those are literals inside a class, except that
           // the glob [!a] means [^a] in regexp
           if (inClass) {
-            this.debug('  in class')
-            if (c === '!' && i === classStart + 1) c = '^'
-            re += c
-            continue
+            this.debug("  in class");
+            if (c === "!" && i === classStart + 1) c = "^";
+            re += c;
+            continue;
           }
 
           // if we already have a stateChar, then it means
           // that there was something like ** or +? in there.
           // Handle the stateChar, then proceed with this one.
-          this.debug('call clearStateChar %j', stateChar)
-          clearStateChar()
-          stateChar = c
+          this.debug("call clearStateChar %j", stateChar);
+          clearStateChar();
+          stateChar = c;
           // if extglob is disabled, then +(asdf|foo) isn't a thing.
           // just clear the statechar *now*, rather than even diving into
           // the patternList stuff.
-          if (options.noext) clearStateChar()
-        continue
+          if (options.noext) clearStateChar();
+          continue;
 
-        case '(':
+        case "(":
           if (inClass) {
-            re += '('
-            continue
+            re += "(";
+            continue;
           }
 
           if (!stateChar) {
-            re += '\\('
-            continue
+            re += "\\(";
+            continue;
           }
 
           patternListStack.push({
@@ -542,66 +550,66 @@ class Minimatch {
             start: i - 1,
             reStart: re.length,
             open: plTypes[stateChar].open,
-            close: plTypes[stateChar].close
-          })
+            close: plTypes[stateChar].close,
+          });
           // negation is (?:(?!js)[^/]*)
-          re += stateChar === '!' ? '(?:(?!(?:' : '(?:'
-          this.debug('plType %j %j', stateChar, re)
-          stateChar = false
-        continue
+          re += stateChar === "!" ? "(?:(?!(?:" : "(?:";
+          this.debug("plType %j %j", stateChar, re);
+          stateChar = false;
+          continue;
 
-        case ')':
+        case ")":
           if (inClass || !patternListStack.length) {
-            re += '\\)'
-            continue
+            re += "\\)";
+            continue;
           }
 
-          clearStateChar()
-          hasMagic = true
-          pl = patternListStack.pop()
+          clearStateChar();
+          hasMagic = true;
+          pl = patternListStack.pop();
           // negation is (?:(?!js)[^/]*)
           // The others are (?:<pattern>)<type>
-          re += pl.close
-          if (pl.type === '!') {
-            negativeLists.push(pl)
+          re += pl.close;
+          if (pl.type === "!") {
+            negativeLists.push(pl);
           }
-          pl.reEnd = re.length
-        continue
+          pl.reEnd = re.length;
+          continue;
 
-        case '|':
+        case "|":
           if (inClass || !patternListStack.length) {
-            re += '\\|'
-            continue
+            re += "\\|";
+            continue;
           }
 
-          clearStateChar()
-          re += '|'
-        continue
+          clearStateChar();
+          re += "|";
+          continue;
 
         // these are mostly the same in regexp and glob
-        case '[':
+        case "[":
           // swallow any state-tracking char before the [
-          clearStateChar()
+          clearStateChar();
 
           if (inClass) {
-            re += '\\' + c
-            continue
+            re += "\\" + c;
+            continue;
           }
 
-          inClass = true
-          classStart = i
-          reClassStart = re.length
-          re += c
-        continue
+          inClass = true;
+          classStart = i;
+          reClassStart = re.length;
+          re += c;
+          continue;
 
-        case ']':
+        case "]":
           //  a right bracket shall lose its special
           //  meaning and represent itself in
           //  a bracket expression if it occurs
           //  first in the list.  -- POSIX.2 2.8.3.2
           if (i === classStart + 1 || !inClass) {
-            re += '\\' + c
-            continue
+            re += "\\" + c;
+            continue;
           }
 
           // handle the case where we left a class open.
@@ -613,35 +621,34 @@ class Minimatch {
           // TODO: It would probably be faster to determine this
           // without a try/catch and a new RegExp, but it's tricky
           // to do safely.  For now, this is safe and works.
-          cs = pattern.substring(classStart + 1, i)
+          cs = pattern.substring(classStart + 1, i);
           try {
-            RegExp('[' + cs + ']')
+            RegExp("[" + cs + "]");
           } catch (er) {
             // not a valid class!
-            sp = this.parse(cs, SUBPARSE)
-            re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
-            hasMagic = hasMagic || sp[1]
-            inClass = false
-            continue
+            sp = this.parse(cs, SUBPARSE);
+            re = re.substr(0, reClassStart) + "\\[" + sp[0] + "\\]";
+            hasMagic = hasMagic || sp[1];
+            inClass = false;
+            continue;
           }
 
           // finish up the class.
-          hasMagic = true
-          inClass = false
-          re += c
-        continue
+          hasMagic = true;
+          inClass = false;
+          re += c;
+          continue;
 
         default:
           // swallow any state char that wasn't consumed
-          clearStateChar()
+          clearStateChar();
 
-          if (reSpecials[c] && !(c === '^' && inClass)) {
-            re += '\\'
+          if (reSpecials[c] && !(c === "^" && inClass)) {
+            re += "\\";
           }
 
-          re += c
-          break
-
+          re += c;
+          break;
       } // switch
     } // for
 
@@ -652,10 +659,10 @@ class Minimatch {
       // this is a huge pita.  We now have to re-walk
       // the contents of the would-be class to re-translate
       // any characters that were passed through as-is
-      cs = pattern.substr(classStart + 1)
-      sp = this.parse(cs, SUBPARSE)
-      re = re.substr(0, reClassStart) + '\\[' + sp[0]
-      hasMagic = hasMagic || sp[1]
+      cs = pattern.substr(classStart + 1);
+      sp = this.parse(cs, SUBPARSE);
+      re = re.substr(0, reClassStart) + "\\[" + sp[0];
+      hasMagic = hasMagic || sp[1];
     }
 
     // handle the case where we had a +( thing at the *end*
@@ -665,15 +672,15 @@ class Minimatch {
     // Go through and escape them, taking care not to double-escape any
     // | chars that were already escaped.
     for (pl = patternListStack.pop(); pl; pl = patternListStack.pop()) {
-      let tail
-      tail = re.slice(pl.reStart + pl.open.length)
-      this.debug('setting tail', re, pl)
+      let tail;
+      tail = re.slice(pl.reStart + pl.open.length);
+      this.debug("setting tail", re, pl);
       // maybe some even number of \, then maybe 1 \, followed by a |
       tail = tail.replace(/((?:\\{2}){0,64})(\\?)\|/g, (_, $1, $2) => {
         /* istanbul ignore else - should already be done */
         if (!$2) {
           // the | isn't already escaped, so escape it.
-          $2 = '\\'
+          $2 = "\\";
         }
 
         // need to escape all those slashes *again*, without escaping the
@@ -682,28 +689,27 @@ class Minimatch {
         // it exactly after itself.  That's why this trick works.
         //
         // I am sorry that you have to see this.
-        return $1 + $1 + $2 + '|'
-      })
+        return $1 + $1 + $2 + "|";
+      });
 
-      this.debug('tail=%j\n   %s', tail, tail, pl, re)
-      const t = pl.type === '*' ? star
-        : pl.type === '?' ? qmark
-        : '\\' + pl.type
+      this.debug("tail=%j\n   %s", tail, tail, pl, re);
+      const t =
+        pl.type === "*" ? star : pl.type === "?" ? qmark : "\\" + pl.type;
 
-      hasMagic = true
-      re = re.slice(0, pl.reStart) + t + '\\(' + tail
+      hasMagic = true;
+      re = re.slice(0, pl.reStart) + t + "\\(" + tail;
     }
 
     // handle trailing things that only matter at the very end.
-    clearStateChar()
+    clearStateChar();
     if (escaping) {
       // trailing \\
-      re += '\\\\'
+      re += "\\\\";
     }
 
     // only need to apply the nodot start if the re starts with
     // something that could conceivably capture a dot
-    const addPatternStart = addPatternStartSet[re.charAt(0)]
+    const addPatternStart = addPatternStartSet[re.charAt(0)];
 
     // Hack to work around lack of negative lookbehind in JS
     // A pattern like: *.!(x).!(y|z) needs to ensure that a name
@@ -711,67 +717,67 @@ class Minimatch {
     // lookahead, has to look ALL the way ahead, to the end of
     // the pattern.
     for (let n = negativeLists.length - 1; n > -1; n--) {
-      const nl = negativeLists[n]
+      const nl = negativeLists[n];
 
-      const nlBefore = re.slice(0, nl.reStart)
-      const nlFirst = re.slice(nl.reStart, nl.reEnd - 8)
-      let nlAfter = re.slice(nl.reEnd)
-      const nlLast = re.slice(nl.reEnd - 8, nl.reEnd) + nlAfter
+      const nlBefore = re.slice(0, nl.reStart);
+      const nlFirst = re.slice(nl.reStart, nl.reEnd - 8);
+      let nlAfter = re.slice(nl.reEnd);
+      const nlLast = re.slice(nl.reEnd - 8, nl.reEnd) + nlAfter;
 
       // Handle nested stuff like *(*.js|!(*.json)), where open parens
       // mean that we should *not* include the ) in the bit that is considered
       // "after" the negated section.
-      const openParensBefore = nlBefore.split('(').length - 1
-      let cleanAfter = nlAfter
+      const openParensBefore = nlBefore.split("(").length - 1;
+      let cleanAfter = nlAfter;
       for (let i = 0; i < openParensBefore; i++) {
-        cleanAfter = cleanAfter.replace(/\)[+*?]?/, '')
+        cleanAfter = cleanAfter.replace(/\)[+*?]?/, "");
       }
-      nlAfter = cleanAfter
+      nlAfter = cleanAfter;
 
-      const dollar = nlAfter === '' && isSub !== SUBPARSE ? '$' : ''
-      re = nlBefore + nlFirst + nlAfter + dollar + nlLast
+      const dollar = nlAfter === "" && isSub !== SUBPARSE ? "$" : "";
+      re = nlBefore + nlFirst + nlAfter + dollar + nlLast;
     }
 
     // if the re is not "" at this point, then we need to make sure
     // it doesn't match against an empty path part.
     // Otherwise a/* will match a/, which it should not.
-    if (re !== '' && hasMagic) {
-      re = '(?=.)' + re
+    if (re !== "" && hasMagic) {
+      re = "(?=.)" + re;
     }
 
     if (addPatternStart) {
-      re = patternStart + re
+      re = patternStart + re;
     }
 
     // parsing just a piece of a larger pattern.
     if (isSub === SUBPARSE) {
-      return [re, hasMagic]
+      return [re, hasMagic];
     }
 
     // skip the regexp for non-magical patterns
     // unescape anything in it, though, so that it'll be
     // an exact match against a file etc.
     if (!hasMagic) {
-      return globUnescape(pattern)
+      return globUnescape(pattern);
     }
 
-    const flags = options.nocase ? 'i' : ''
+    const flags = options.nocase ? "i" : "";
     try {
-      return Object.assign(new RegExp('^' + re + '$', flags), {
+      return Object.assign(new RegExp("^" + re + "$", flags), {
         _glob: pattern,
         _src: re,
-      })
+      });
     } catch (er) /* istanbul ignore next - should be impossible */ {
       // If it was an invalid regular expression, then it can't match
       // anything.  This trick looks for a character after the end of
       // the string, which is of course impossible, except in multi-line
       // mode, but it's not a /m regex.
-      return new RegExp('$.')
+      return new RegExp("$.");
     }
   }
 
-  makeRe () {
-    if (this.regexp || this.regexp === false) return this.regexp
+  makeRe() {
+    if (this.regexp || this.regexp === false) return this.regexp;
 
     // at this point, this.set is a 2d array of partial
     // pattern strings, or "**".
@@ -779,18 +785,20 @@ class Minimatch {
     // It's better to use .match().  This function shouldn't
     // be used, really, but it's pretty convenient sometimes,
     // when you just want to work with a regex.
-    const set = this.set
+    const set = this.set;
 
     if (!set.length) {
-      this.regexp = false
-      return this.regexp
+      this.regexp = false;
+      return this.regexp;
     }
-    const options = this.options
+    const options = this.options;
 
-    const twoStar = options.noglobstar ? star
-      : options.dot ? twoStarDot
-      : twoStarNoDot
-    const flags = options.nocase ? 'i' : ''
+    const twoStar = options.noglobstar
+      ? star
+      : options.dot
+      ? twoStarDot
+      : twoStarNoDot;
+    const flags = options.nocase ? "i" : "";
 
     // coalesce globstars and regexpify non-globstar patterns
     // if it's the only item, then we just do one twoStar
@@ -798,109 +806,115 @@ class Minimatch {
     // if it's the last, append (\/twoStar|) to previous
     // if it's in the middle, append (\/|\/twoStar\/) to previous
     // then filter out GLOBSTAR symbols
-    let re = set.map(pattern => {
-      pattern = pattern.map(p =>
-        typeof p === 'string' ? regExpEscape(p)
-        : p === GLOBSTAR ? GLOBSTAR
-        : p._src
-      ).reduce((set, p) => {
-        if (!(set[set.length - 1] === GLOBSTAR && p === GLOBSTAR)) {
-          set.push(p)
-        }
-        return set
-      }, [])
-      pattern.forEach((p, i) => {
-        if (p !== GLOBSTAR || pattern[i-1] === GLOBSTAR) {
-          return
-        }
-        if (i === 0) {
-          if (pattern.length > 1) {
-            pattern[i+1] = '(?:\\\/|' + twoStar + '\\\/)?' + pattern[i+1]
-          } else {
-            pattern[i] = twoStar
+    let re = set
+      .map((pattern) => {
+        pattern = pattern
+          .map((p) =>
+            typeof p === "string"
+              ? regExpEscape(p)
+              : p === GLOBSTAR
+              ? GLOBSTAR
+              : p._src
+          )
+          .reduce((set, p) => {
+            if (!(set[set.length - 1] === GLOBSTAR && p === GLOBSTAR)) {
+              set.push(p);
+            }
+            return set;
+          }, []);
+        pattern.forEach((p, i) => {
+          if (p !== GLOBSTAR || pattern[i - 1] === GLOBSTAR) {
+            return;
           }
-        } else if (i === pattern.length - 1) {
-          pattern[i-1] += '(?:\\\/|' + twoStar + ')?'
-        } else {
-          pattern[i-1] += '(?:\\\/|\\\/' + twoStar + '\\\/)' + pattern[i+1]
-          pattern[i+1] = GLOBSTAR
-        }
+          if (i === 0) {
+            if (pattern.length > 1) {
+              pattern[i + 1] = "(?:\\/|" + twoStar + "\\/)?" + pattern[i + 1];
+            } else {
+              pattern[i] = twoStar;
+            }
+          } else if (i === pattern.length - 1) {
+            pattern[i - 1] += "(?:\\/|" + twoStar + ")?";
+          } else {
+            pattern[i - 1] += "(?:\\/|\\/" + twoStar + "\\/)" + pattern[i + 1];
+            pattern[i + 1] = GLOBSTAR;
+          }
+        });
+        return pattern.filter((p) => p !== GLOBSTAR).join("/");
       })
-      return pattern.filter(p => p !== GLOBSTAR).join('/')
-    }).join('|')
+      .join("|");
 
     // must match entire pattern
     // ending in a * or ** will make it less strict.
-    re = '^(?:' + re + ')$'
+    re = "^(?:" + re + ")$";
 
     // can match anything, as long as it's not this.
-    if (this.negate) re = '^(?!' + re + ').*$'
+    if (this.negate) re = "^(?!" + re + ").*$";
 
     try {
-      this.regexp = new RegExp(re, flags)
+      this.regexp = new RegExp(re, flags);
     } catch (ex) /* istanbul ignore next - should be impossible */ {
-      this.regexp = false
+      this.regexp = false;
     }
-    return this.regexp
+    return this.regexp;
   }
 
-  match (f, partial = this.partial) {
-    this.debug('match', f, this.pattern)
+  match(f, partial = this.partial) {
+    this.debug("match", f, this.pattern);
     // short-circuit in the case of busted things.
     // comments, etc.
-    if (this.comment) return false
-    if (this.empty) return f === ''
+    if (this.comment) return false;
+    if (this.empty) return f === "";
 
-    if (f === '/' && partial) return true
+    if (f === "/" && partial) return true;
 
-    const options = this.options
+    const options = this.options;
 
     // windows: need to use /, not \
-    if (path.sep !== '/') {
-      f = f.split(path.sep).join('/')
+    if (path.sep !== "/") {
+      f = f.split(path.sep).join("/");
     }
 
     // treat the test path as a set of pathparts.
-    f = f.split(slashSplit)
-    this.debug(this.pattern, 'split', f)
+    f = f.split(slashSplit);
+    this.debug(this.pattern, "split", f);
 
     // just ONE of the pattern sets in this.set needs to match
     // in order for it to be valid.  If negating, then just one
     // match means that we have failed.
     // Either way, return on the first hit.
 
-    const set = this.set
-    this.debug(this.pattern, 'set', set)
+    const set = this.set;
+    this.debug(this.pattern, "set", set);
 
     // Find the basename of the path by looking for the last non-empty segment
-    let filename
+    let filename;
     for (let i = f.length - 1; i >= 0; i--) {
-      filename = f[i]
-      if (filename) break
+      filename = f[i];
+      if (filename) break;
     }
 
     for (let i = 0; i < set.length; i++) {
-      const pattern = set[i]
-      let file = f
+      const pattern = set[i];
+      let file = f;
       if (options.matchBase && pattern.length === 1) {
-        file = [filename]
+        file = [filename];
       }
-      const hit = this.matchOne(file, pattern, partial)
+      const hit = this.matchOne(file, pattern, partial);
       if (hit) {
-        if (options.flipNegate) return true
-        return !this.negate
+        if (options.flipNegate) return true;
+        return !this.negate;
       }
     }
 
     // didn't get any hits.  this is success if it's a negative
     // pattern, failure otherwise.
-    if (options.flipNegate) return false
-    return this.negate
+    if (options.flipNegate) return false;
+    return this.negate;
   }
 
-  static defaults (def) {
-    return minimatch.defaults(def).Minimatch
+  static defaults(def) {
+    return minimatch.defaults(def).Minimatch;
   }
 }
 
-minimatch.Minimatch = Minimatch
+minimatch.Minimatch = Minimatch;
